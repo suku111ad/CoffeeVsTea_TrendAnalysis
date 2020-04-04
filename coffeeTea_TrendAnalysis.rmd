@@ -1,0 +1,235 @@
+---
+title: "Hypothesis Testing of Drink Preference"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Reading Survey Data and libraries
+```{r, warning=FALSE, message=FALSE}
+data <- read.csv('coffeetea.csv')
+library(dplyr)
+```
+
+# Preparing Raw and Unstructered Data to Useful data
+* The First five email address are not present (We added the field later). Assigning random email addresses to the first 5 rows
+```{r}
+
+finaldata = data[!duplicated(data$Email.Address), ]
+```
+* We performed the 1st exercise to make the email address column not null. Now, we remove the duplicates with respect to the email address from the 2nd exercise above 
+
+# Exploratory Data Analysis
+```{r}
+summary(finaldata[,2:7])
+
+```
+* We have collected 6 attributes of data namely  
++ 1. Do you prefer Coffee?  
++ 2. Number of drinks/day  
++ 3. Gender  
++ 4. Nationality  
++ 5. Age  
++ 6. Email Address  
+
+##### Our main attribute (on which we are going to perform our analysis) is Drink Preference (1st attribute)  
+
+* We can see a high level summary below for all the attributes.  
+* We shall describe the main attribute's description in the next block  
+* We got a good Male:Female ratio which is 34:32  
+* We also got the survey response from diverse Nationalities like American, India, Chinese, Thailand, and Taiwan  
+* More than 95% of our age-group is 21-30 (which is a slight limitation to our survey)  
+
+
+# Drink Preference Analysis
+```{r}
+counts = table(finaldata$Do.you.prefer.tea.or.coffee.)
+
+x = barplot(counts, main="Barplot(Histogram for Categorical Data) for Drink Preference",
+  xlab="Drink Preference", ylab='counts', col = c("green","red", "yellow"), beside = TRUE)
+
+text(x, counts, labels = counts ,cex=1, pos = 1)
+```
+
+
+```{r}
+x = barplot(prop.table(table(finaldata$Do.you.prefer.tea.or.coffee.)), main = 'Barplot of Drink Preference (%)', xlab = 'Drink', ylab = 'Percentage of People', ylim = c(0,0.6))
+
+text(x, prop.table(table(finaldata$Do.you.prefer.tea.or.coffee.)), labels = paste(round(prop.table(table(finaldata$Do.you.prefer.tea.or.coffee.)), digits = 4)*100, "%") ,cex=1, col = "blue", pos = 1) 
+
+```
+
+##### Barplots are the histograms of Categorical Variables
+##### We see that 46.97% of of our sample prefers Coffee, while 48.48% perfer Tea and 4.55% doesn't prefer any of the drink
+
+
+```{r}
+counts = table(finaldata$Do.you.prefer.tea.or.coffee., finaldata$How.many.times.do.you.drink.it.on.daily.basis.)
+
+x = barplot(counts, main="Distribution of 'How many drinks per Day'",
+  xlab="How many Drinks per Day", ylab='counts', col = c("darkblue","red","yellow"),legend = rownames(counts), beside=TRUE)
+
+text(x, counts, labels = counts ,cex=1, pos = 1)
+```
+
+##### The distribution of the drinks per day with respect to Drink Preference is shown in the graph. 
+* More Coffee drinkers have 1 drink per day than tea drinkers
++ While more Tea drinkers have 2 drinks per day than coffee drinkers
++ 7 people have a preference over Coffee or Tea but don't drink it on a daily basis
++ 3 people have no preference of tea or coffe and doesn't drink them on a daily basis
+
+```{r}
+counts = table(finaldata$Do.you.prefer.tea.or.coffee., finaldata$Gender)
+
+x = barplot(counts, main="Distribution of 'Drink Prefernce over Gender'",
+  xlab="Gender", ylab='Drink preference Counts', col = c('aquamarine', 'burlywood1', 'coral1'), legend = rownames(counts), beside=TRUE, ylim = c(0,20))
+
+text(x, counts, labels = counts ,cex=1, pos = 1)
+
+```
+
+##### The distribution drink preference with respect to the gender is shown in the above graph.
+* It's an interesting fact that more Males prefer Coffee than Females.
++ While more Females prefer Tea than Males 
+
+
+
+#### Altering the Drink Preference column to a bi-valued column. - According to our statistical analysis, the column should have 2 values - 'Coffee', 'Not Coffee'
+
+```{r}
+finaldata$Do.you.prefer.tea.or.coffee. = as.character(finaldata$Do.you.prefer.tea.or.coffee.)
+
+finaldata$Do.you.prefer.tea.or.coffee.[finaldata$Do.you.prefer.tea.or.coffee. != 'Coffee'] = 'Not Coffee'
+```
+
+##### Now let's look at the distribution of how the drink preference looks like
+
+```{r}
+x = barplot(prop.table(table(finaldata$Do.you.prefer.tea.or.coffee.)), main = 'Barplot of Drink Preference', xlab = 'Drink', ylab = 'Percentage of People', ylim = c(0,0.6))
+
+text(x, prop.table(table(finaldata$Do.you.prefer.tea.or.coffee.)), labels = paste(round(prop.table(table(finaldata$Do.you.prefer.tea.or.coffee.)), digits = 4)*100, "%") ,cex=1, col = "blue", pos = 1) 
+```
+
+##### We can simply say that 46.97% prefer Coffee while 53.03% doesn't prefer Coffee
+
+# Statistical Analysis
+
+### Null Hypothesis: The proportion of people who prefer coffee will be equal to the proportion of people who don't prefer Coffee  
+
+### Alternate Hypothesis: There proportion of people who prefer cofffe will not be equal to the proportion of people who don't prefer coffee
+
+* Sample Size n
+
+```{r}
+n = length(finaldata$Do.you.prefer.tea.or.coffee.)
+```
+
+* Sample size n = 66
+
+Here Null Hypothesis says that P = P0. So we have P = P0 = 0.5
+
+### Calculating P_hat 
+
+```{r}
+
+p0 = 0.5
+p_hat = length(subset(finaldata$Do.you.prefer.tea.or.coffee., finaldata$Do.you.prefer.tea.or.coffee. == 'Coffee'))/length(finaldata$Do.you.prefer.tea.or.coffee.)
+
+print(p_hat)
+
+```
+
+#### Confidence Intervals
+
+* The Confidence Intervals for the above are p_hat - E and p_hat + E. Where E is the Error.
+
+CI: (p_hat-E, p_hat+E)
+
+where
+E = z * sqrt(p_hat*q_hat / n)
+
+and We have q_hat = 1 - p_hat
+
+#### Our Confidence level is 95%
+
+Hence alpha = 0.05 and alpha/2 = 0.025
+Hence we have to calculate z-value for 1-0.025 = 0.975
+
+```{r}
+E = qnorm(0.975)*sqrt(p_hat*(1-p_hat)/n)
+print(E)
+
+```
+##### Hence the Error for the confodence interval is 0.12
+
+```{r}
+Lower_CI = p_hat - E
+Upper_CI = p_hat + E
+
+print(Lower_CI)
+print(Upper_CI)
+```
+##### Lower Confidence Interval = 0.34929
+##### Upper Confidence Interval = 0.59010
+
+#### We can say that, with 95% confidence, the population proportion of people who prefer coffee will definetly be in the range (0.349, 0.590)
+
+### Calculating Test Statistic
+
+```{r}
+z = (p_hat - p0)/sqrt(p0*(1-p0)/n)
+print(z)
+```
+
+### Calculating p-value
+
+```{r}
+
+p_value = 2*pnorm(z)
+print(p_value)
+
+```
+
+## p-value is 0.62 which greater than our confidence level 0.05
+### We fail to reject the Null Hypothesis
+
+# Statistical Analysis using Traditional Method
+
+*The Yates continuity correction is disabled for pedagogical reasons.
+```{r}
+finaltest = prop.test(length(subset(finaldata$Do.you.prefer.tea.or.coffee., finaldata$Do.you.prefer.tea.or.coffee. == 'Coffee')), length(finaldata$Do.you.prefer.tea.or.coffee.), p=0.5, correct=FALSE, alternative = "two.sided")
+
+finaltest
+
+```
+
+### The p_value obtained in the traditional test is also 0.6225. While it is greater than our confidence level 0.05, We interpret the following
+
+## There is a much higher probability (0.6225) that the null hypothesis (the proportion of people who prefer coffee is equal to the proportion of people who prefer Tea) is TRUE. when compared to our probability (0.05)
+
+## Hence we fail to reject the Null Hypothesis.
+
+```{r}
+print(paste("Test Statistic: ",finaltest$statistic))
+
+print(paste("Parameter: ",finaltest$parameter))
+
+print(paste("P_Value: ",finaltest$p.value))
+
+print(paste("Null Value: ",finaltest$null.value))
+
+print(paste("Confidence Intervals : ",finaltest$conf.int))
+
+print(paste("Alternative: ", finaltest$alternative))
+
+print(paste("Method: ", finaltest$method))
+```
+
+```{r ref.label=knitr::all_labels(), echo = T, eval = F}
+```
+
+
